@@ -13,10 +13,9 @@ const {
 const async = require('async');
 
 /**
- * Watch the video to know how to get CLIENT_ID, CLIENT_SECRET, REDIRECT_URI and REFRECH_TOKEN
+ * Watch the video on how to get CLIENT_ID, CLIENT_SECRET, REDIRECT_URI and REFRECH_TOKEN
  * https://www.youtube.com/watch?v=1y0-IfRW114&t=1242s
  */
-
 
 const CLIENT_ID = process.env.CLIENT_ID
 const CLIENT_SECRET = process.env.CLIENT_SECRET
@@ -37,9 +36,6 @@ const drive = google.drive({
     version: 'v3',
     auth: oauth2Client
 })
-
-const filePath = path.join(__dirname, 'FACTURE.pdf');
-
 
 // function that Upload a file to a G-drive
 /**
@@ -70,7 +66,6 @@ async function uploadFile(fileName, fileMimeType, filePath, parentFolderID) {
 }
 
 
-// delete file function by providing its ID (fId) on google drive 
 /**
  * This functions deletes a file/folder from google drive by providing its ID.
  * @async 
@@ -127,6 +122,7 @@ async function createFolderOnGDrive(folderName, parentFolderID) {
  * and returns its ID.
  * @param {String} folderName - The name of the folder
  * @param {String} ParentFolderId - The Id of the parent folder
+ * @returns The id of the folder on google drive
  */
 
 async function folderExists(folderName, ParentFolderId) {
@@ -157,29 +153,75 @@ async function folderExists(folderName, ParentFolderId) {
     return idfound ;
 }
 
-    
+/**
+ * fileExists function checks if a folder exists on google drive 
+ * and returns its ID.
+ * @param {String} fileName - The name of the folder
+ * @param {String} ParentFolderId - The Id of the parent folder
+ */
+
+async function fileExists(fileName, ParentFolderId) {
+    var idfound=undefined;
+
+    const response = await drive.files.list({
+        q: "name='"+fileName+"'",
+        pageSize: 10,
+        fields: 'nextPageToken, files(id, name)',
+    }).then((response)=>{
+        const files = response.data.files;
+        if (files.length) {
+            console.log('Files:');
+            files.map((file) => {
+
+                console.log(`${file.name} (${file.id})`);
+                if (file.name ===fileName) 
+                {
+                    idfound =file.id;
+                    console.log(fileName + " exists !!!!!");
+                }
+            });
+        }
+    }).catch((err)=>{
+       console.log('The API returned an error: ' + err);
+       throw (err)
+    });
+    return idfound ;
+}
 
 
-const ffName = 'facture Telephone.pdf';
-const ffMimeType = "application/pdf";
-const ffpath = filePath;
-const fparentFolderID = ''
 
+/* tests and examples */   
+// const filePath = path.join(__dirname, 'FACTURE.pdf');
+
+// const ffName = 'facture Telephone.pdf';
+// const ffMimeType = "application/pdf";
+// const ffpath = filePath;
+// const fparentFolderID = ''
+
+/* Upload file */ 
 //uploadFile(ffName,ffMimeType,ffpath)
 
-const fileToDel = '1Q4COfFUjLpEujVuRjyAAXOFhR4Z6rO0U'
-//deleteFile(fileToDel);
+/* Delete File*/
+// const fileToDel = '1-uMZVMiZX_Zkr_cf0jKtfw1hfxc03E62ozK-u9Ep04o'
+// deleteFile(fileToDel);
 
 // createFolderOnGDrive("Carnet des doctorants",'root').then(fId =>{
 //     console.log('Folder Created successfully with the Id :'+ fId);
 //     // Do somethin else with the folderID.
 // });
 
-folderExists('tibermacine', '').then((x)=>{
-    console.log("Final result File ID : "+ x);
-})
+// folderExists('tibermacine', '').then((x)=>{
+//     console.log("Final result File ID : "+ x);
+// })
+
+
+// fileExists("Tutorial",'').then((x)=>{
+//     console.log(" File found by ID : "+ x);
+// })
 
 
 exports.uploadFile = uploadFile;
 exports.deleteFile = deleteFile;
 exports.createFolderOnGDrive = createFolderOnGDrive;
+exports.folderExists= folderExists;
+exports.fileExists= fileExists;
